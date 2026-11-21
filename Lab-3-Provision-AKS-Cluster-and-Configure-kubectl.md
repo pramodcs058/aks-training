@@ -1,23 +1,5 @@
 # Lab 3 – Provision an AKS Cluster and Configure kubectl Access
 
-## Lab Overview
-
-| Item | Description |
-|---|---|
-| **Lab type** | Existing TOC – Hands-on Lab |
-| **Module** | Module 1: AKS Architecture & Cluster Provisioning |
-| **Environment** | Azure Portal – Cloud Shell (Bash) |
-| **Objective** | Provision an AKS cluster using Azure CLI, retrieve its credentials and connect to the Kubernetes control plane using `kubectl`. |
-| **Expected outcome** | Participants will create an AKS cluster, configure the `kubectl` context and verify cluster connectivity. |
-
-## Concepts
-
-- **Azure Kubernetes Service (AKS):** A managed Kubernetes service on Azure. Azure manages the Kubernetes control plane, while the customer manages the workloads and node pools.
-- **Resource group:** An Azure container used to organize and manage related resources. In this lab, it holds the AKS cluster resource.
-- **Kubernetes control plane:** The set of Kubernetes components that expose the Kubernetes API and manage the desired state of the cluster. In AKS, the control plane is managed by Azure.
-- **kubectl:** The Kubernetes command-line tool used to communicate with the Kubernetes API server and manage cluster resources.
-- **kubeconfig/context:** The kubeconfig file stores cluster connection and authentication information. A context identifies the cluster, user and (optionally) namespace that `kubectl` uses.
-
 ## Prerequisites
 
 - An Azure subscription with permission to create resource groups and AKS clusters.
