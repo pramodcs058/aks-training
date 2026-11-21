@@ -1,9 +1,5 @@
 # Lab 4 – Deploy NGINX with ConfigMap Environment Variables on AKS
 
-**Module:** Core Workload Deployment on AKS  
-**Lab type:** Basic  
-**Suggested duration:** 15 minutes  
-**Environment:** Azure Portal – Cloud Shell (Bash)
 
 ## Lab objective
 
