@@ -1,13 +1,5 @@
 # Lab 10 – Explore StorageClasses and Create a PersistentVolumeClaim on AKS
 
-## Lab details
-
-| Item | Description |
-|---|---|
-| **Environment** | Azure Portal – Cloud Shell – Bash |
-| **Platform** | Azure Kubernetes Service (AKS) |
-| **Estimated duration** | 15–20 minutes |
-| **Level** | Beginner to Intermediate |
 
 ## Objective
 
