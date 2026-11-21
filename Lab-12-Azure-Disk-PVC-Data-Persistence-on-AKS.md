@@ -1,16 +1,5 @@
 # Lab 12 – Create an Azure Disk PVC and Verify Data Persistence on AKS
 
-## Lab information
-
-| Item | Details |
-|---|---|
-| **Module** | Module 4 – Storage on AKS |
-| **Lab type** | Existing TOC Lab |
-| **Duration** | As scheduled in the training plan |
-| **Execution environment** | Azure Portal → Cloud Shell → Bash |
-| **Storage driver** | Azure Disk CSI (`disk.csi.azure.com`) |
-| **StorageClass** | `managed-csi` |
-| **Access mode** | `ReadWriteOnce` (RWO) |
 
 ## Objective
 
