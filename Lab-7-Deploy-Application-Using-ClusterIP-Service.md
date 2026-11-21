@@ -1,16 +1,5 @@
 # Lab 7 – Deploy an Application and Access It Using a ClusterIP Service on AKS
 
-## Lab Overview
-
-| Item | Details |
-|---|---|
-| **Module** | Module 3 – AKS Networking Deep Dive |
-| **Difficulty** | Basic |
-| **Suggested duration** | 15 minutes |
-| **Execution environment** | Azure Portal – Cloud Shell (Bash) |
-| **Workload** | NGINX web server |
-| **Kubernetes resources** | Namespace, Deployment, ClusterIP Service, test Pod |
-
 ## Problem Statement
 
 Deploy an NGINX application on AKS and expose it internally using a Kubernetes `ClusterIP` Service. From a separate Pod running in the same cluster, access the application using the Service name and verify that Kubernetes DNS resolves the Service correctly.
