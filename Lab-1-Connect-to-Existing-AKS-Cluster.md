@@ -1,10 +1,5 @@
 # Lab 1 – Connect to an Existing AKS Cluster Using Azure CLI and kubectl
 
-**Lab type:** Basic  
-**Suggested duration:** 15 minutes  
-**Module:** Module 1 – AKS Architecture & Cluster Provisioning  
-**Difficulty:** Beginner to Intermediate  
-
 ---
 
 ## 1. Lab Scenario
