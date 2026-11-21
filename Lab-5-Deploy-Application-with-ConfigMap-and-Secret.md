@@ -1,9 +1,5 @@
 # Lab 5 – Deploy an Application Using ConfigMap and Secret on AKS
 
-**Module:** 2 – Core Workload Deployment on AKS  
-**Lab type:** Intermediate | **Suggested duration:** 20 minutes  
-**Environment:** Azure Portal – Cloud Shell (Bash)
-
 ## Lab objective
 Deploy a sample application that reads non-sensitive settings from a ConfigMap mounted as a file and sensitive values from a Kubernetes Secret injected as environment variables.
 
