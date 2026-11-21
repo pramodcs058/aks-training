@@ -1,15 +1,5 @@
 # Lab 2 – Inspect and Scale AKS Node Pools
 
-## Lab overview
-
-| Item | Details |
-|---|---|
-| Lab type | Intermediate |
-| Duration | 20 minutes (Azure provisioning may take additional time) |
-| Module | Module 1 – AKS Architecture & Cluster Provisioning |
-| Environment | Azure Portal – Cloud Shell (Bash) |
-| Task | Inspect AKS node pools and safely scale a user node pool |
-
 ## Problem statement
 
 An organization needs to review the compute capacity of an existing Azure Kubernetes Service (AKS) cluster. Inspect its system and user node pools, review their VM sizes and node counts, and perform a controlled scale-out of a manually managed user node pool.
