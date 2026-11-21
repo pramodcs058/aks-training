@@ -1,9 +1,5 @@
 # Lab 6 – Deploy a Two-Tier Application on AKS Using ConfigMap and Secret
 
-**Module:** 2 – Core Workload Deployment on AKS  
-**Lab type:** Existing TOC Lab  
-**Environment:** Azure Portal – Cloud Shell (Bash)
-
 ## Lab objective
 Deploy a two-tier application on AKS consisting of an NGINX frontend and a Python backend API. Use ConfigMaps for non-sensitive application configuration and a Kubernetes Secret for sensitive backend credentials.
 
