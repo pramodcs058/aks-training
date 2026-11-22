@@ -405,18 +405,35 @@ Database credentials configured: True
 Forward a Cloud Shell local port to the frontend Service. The frontend will then proxy `/api/` requests to the backend using the internal Service DNS name.
 
 ```bash
-kubectl port-forward service/frontend 8080:80 -n "$NAMESPACE" \
+NAMESPACE=aks-two-tier-lab
+
+kubectl port-forward svc/frontend 18080:80 \
+  -n "$NAMESPACE" \
   >/tmp/aks-two-tier-port-forward.log 2>&1 &
+
 PF_PID=$!
+
 sleep 3
 
-curl --fail --silent --show-error http://127.0.0.1:8080/
-printf '\n--- Backend API through frontend proxy ---\n'
-curl --fail --silent --show-error http://127.0.0.1:8080/api/
+if ! kill -0 "$PF_PID" 2>/dev/null; then
+    echo "Port forwarding failed:"
+    cat /tmp/aks-two-tier-port-forward.log
+    exit 1
+fi
+
+echo "--- Frontend Response ---"
+curl --fail --silent --show-error http://127.0.0.1:18080/
+
+echo ""
+echo "--- Backend API through frontend proxy ---"
+
+curl --fail --silent --show-error http://127.0.0.1:18080/api/
+
 CURL_STATUS=$?
 
 kill "$PF_PID" 2>/dev/null || true
 wait "$PF_PID" 2>/dev/null || true
+
 test "$CURL_STATUS" -eq 0
 ```
 
