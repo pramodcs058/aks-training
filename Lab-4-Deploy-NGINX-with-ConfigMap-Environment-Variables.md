@@ -73,9 +73,9 @@ kubectl describe configmap nginx-app-config --namespace default
 ### Step 3 – Create an NGINX Deployment that uses the ConfigMap
 
 Create a Deployment manifest in Cloud Shell:
+Open a file : vi nginx-configmap-deployment.yaml
 
 ```bash
-cat <<'EOF' > nginx-configmap-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -100,7 +100,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: nginx-app-config
-EOF
 ```
 
 **Key configuration:**
