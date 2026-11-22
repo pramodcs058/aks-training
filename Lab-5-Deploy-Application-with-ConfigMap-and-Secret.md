@@ -99,8 +99,9 @@ kubectl describe secret app-credentials -n "$NAMESPACE"
 
 The sample Python application reads `app-settings.json` from the mounted ConfigMap volume and reads `DB_USERNAME` and `DB_PASSWORD` from environment variables. Its HTTP response reports only whether the credentials are configured; it never returns their values.
 
+Create an app-deployment file : vi app-deployment.yaml
+
 ```bash
-cat > app-deployment.yaml <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -181,7 +182,6 @@ spec:
         - name: app-config-volume
           configMap:
             name: app-settings
-EOF
 ```
 
 Apply the Deployment and wait for the Pod to become ready:
