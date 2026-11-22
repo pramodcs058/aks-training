@@ -63,6 +63,9 @@ data:
       "logLevel": "info"
     }
 
+```
+
+```
 kubectl apply -f app-configmap.yaml
 kubectl describe configmap app-settings -n "$NAMESPACE"
 ```
