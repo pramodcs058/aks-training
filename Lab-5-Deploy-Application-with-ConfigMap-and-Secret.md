@@ -47,8 +47,9 @@ kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -
 
 The ConfigMap stores non-sensitive settings in a JSON file. The application will read this file from a mounted directory.
 
+Create a file: vi app-configmap.yaml
+
 ```bash
-cat > app-configmap.yaml <<'EOF'
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -61,7 +62,6 @@ data:
       "environment": "training",
       "logLevel": "info"
     }
-EOF
 
 kubectl apply -f app-configmap.yaml
 kubectl describe configmap app-settings -n "$NAMESPACE"
