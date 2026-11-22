@@ -236,37 +236,7 @@ DB_USERNAME configured: True
 DB_PASSWORD configured: True
 ```
 
-## Step 7 – Test the application response
-
-Use `kubectl port-forward` to access the application locally through Cloud Shell. The commands start port forwarding temporarily, call the application endpoint and then stop the port-forward process.
-
-```bash
-kubectl port-forward deployment/config-secret-demo 8080:8080 -n "$NAMESPACE" \
-  >/tmp/config-secret-port-forward.log 2>&1 &
-PF_PID=$!
-sleep 3
-curl --fail --silent --show-error http://127.0.0.1:8080/
-CURL_STATUS=$?
-kill "$PF_PID" 2>/dev/null || true
-wait "$PF_PID" 2>/dev/null || true
-test "$CURL_STATUS" -eq 0
-```
-
-Expected response:
-
-```json
-{
-  "appName": "orders-demo",
-  "environment": "training",
-  "logLevel": "info",
-  "databaseUsernameConfigured": true,
-  "databasePasswordConfigured": true
-}
-```
-
-The response confirms that the application read the mounted configuration file and detected both Secret-backed environment variables. Secret values are not included in the response.
-
-## Step 8 – Clean up lab resources
+## Step 7 – Clean up lab resources
 
 ```bash
 kubectl delete namespace "$NAMESPACE"
