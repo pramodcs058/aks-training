@@ -65,8 +65,9 @@ The first two commands verify cluster connectivity and node availability. The na
 
 The frontend ConfigMap contains the NGINX reverse-proxy configuration and the HTML page served to users.
 
+Create a file: vi frontend-config.yaml
+
 ```bash
-cat > frontend-config.yaml <<'EOF'
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -119,8 +120,9 @@ data:
       </script>
     </body>
     </html>
-EOF
+```
 
+```
 kubectl apply -f frontend-config.yaml
 kubectl describe configmap frontend-config -n "$NAMESPACE"
 ```
@@ -131,8 +133,9 @@ kubectl describe configmap frontend-config -n "$NAMESPACE"
 
 The backend ConfigMap stores settings that are not confidential. These values are supplied to the backend container as environment variables.
 
+Create a file: vi backend-config.yaml
+
 ```bash
-cat > backend-config.yaml <<'EOF'
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -142,8 +145,9 @@ data:
   APP_NAME: "orders-api"
   APP_ENV: "training"
   APP_MESSAGE: "Response returned by the AKS backend API"
-EOF
+```
 
+```
 kubectl apply -f backend-config.yaml
 kubectl describe configmap backend-config -n "$NAMESPACE"
 ```
@@ -181,8 +185,9 @@ kubectl describe secret backend-credentials -n "$NAMESPACE"
 
 The backend runs a small Python HTTP API on port `8080`. It reads application settings from the backend ConfigMap and credentials from the Secret. Its response includes only a Boolean status for the credentials, never their values.
 
+Create a file: vi backend.yaml
+
 ```bash
-cat > backend.yaml <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -282,8 +287,10 @@ spec:
     - name: http
       port: 8080
       targetPort: http
-EOF
+```
 
+
+```
 kubectl apply -f backend.yaml
 kubectl rollout status deployment/backend -n "$NAMESPACE"
 kubectl get pods -l app=backend -n "$NAMESPACE"
@@ -296,8 +303,9 @@ The Deployment manages the backend Pod. The `backend` ClusterIP Service provides
 
 The frontend Deployment mounts the ConfigMap files into the NGINX container. NGINX serves the page and proxies API requests to `http://backend:8080/` using Kubernetes Service discovery.
 
+Create a file: vi frontend.yaml
+
 ```bash
-cat > frontend.yaml <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -353,8 +361,9 @@ spec:
     - name: http
       port: 80
       targetPort: http
-EOF
+```
 
+```
 kubectl apply -f frontend.yaml
 kubectl rollout status deployment/frontend -n "$NAMESPACE"
 kubectl get pods,services -n "$NAMESPACE" -o wide
