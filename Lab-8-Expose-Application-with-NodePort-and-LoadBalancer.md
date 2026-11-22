@@ -71,8 +71,9 @@ A namespace isolates the Deployment, Services and test Pod created for this exer
 
 Create a manifest file in Cloud Shell:
 
+vi service-types.yaml
+
 ```bash
-cat > service-types.yaml <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -132,8 +133,9 @@ spec:
       port: 80
       targetPort: 80
       protocol: TCP
-EOF
+```
 
+```
 kubectl apply -f service-types.yaml
 kubectl rollout status deployment/web-demo --namespace "$NAMESPACE" --timeout=180s
 kubectl get pods --namespace "$NAMESPACE" -o wide
