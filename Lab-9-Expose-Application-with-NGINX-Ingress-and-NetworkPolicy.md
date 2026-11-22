@@ -113,7 +113,7 @@ Confirm that the Ingress class `webapprouting.kubernetes.azure.com` is available
 ## Step 3 – Create a lab namespace
 
 ```bash
-kubectl create namespace "$NAMESPACE"
+kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 ```
 
 Confirm the namespace:
@@ -126,10 +126,17 @@ kubectl get namespace "$NAMESPACE"
 
 ## Step 4 – Deploy the backend application
 
-The backend uses a lightweight HTTP echo container that returns a fixed response. It listens on TCP port `5678`.
+The backend uses the lightweight `hashicorp/http-echo:1.0.0` container. It listens on TCP port `5678` and returns a fixed response.
+
+### 4.1 Create the backend manifest using vi
 
 ```bash
-kubectl apply -n "$NAMESPACE" -f - <<'YAML'
+vi backend.yaml
+```
+
+Press `i`, paste the following YAML, then press `Esc`, type `:wq`, and press `Enter`.
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -168,59 +175,102 @@ spec:
       port: 5678
       targetPort: 5678
       protocol: TCP
-YAML
 ```
 
-Wait for the backend Pod to become ready and check the Service:
+### 4.2 Validate and apply the manifest
+
+```bash
+kubectl apply --dry-run=client -n "$NAMESPACE" -f backend.yaml
+kubectl apply -n "$NAMESPACE" -f backend.yaml
+```
+
+### 4.3 Wait for the backend and verify its Service
 
 ```bash
 kubectl rollout status deployment/backend -n "$NAMESPACE" --timeout=120s
-kubectl get pods,service -n "$NAMESPACE" -l app=backend
+kubectl get deployment backend -n "$NAMESPACE"
+kubectl get pods -n "$NAMESPACE" -l app=backend -o wide
+kubectl get service backend -n "$NAMESPACE"
+kubectl get endpoints backend -n "$NAMESPACE"
 ```
+
+The backend Service should have a ready endpoint on port `5678`. If its endpoints show `<none>`, inspect the Pod labels and readiness before continuing.
 
 **Explanation:** The Deployment manages the backend Pod. The ClusterIP Service named `backend` provides a stable DNS name (`backend`) and virtual IP for other Pods in the same namespace.
 
 ## Step 5 – Create the frontend NGINX configuration
 
-The frontend serves a simple home page and forwards requests under `/api/` to the backend Service.
+The frontend serves a simple home page, provides a health endpoint, and forwards requests under `/api/` to the backend Service.
+
+### 5.1 Create the ConfigMap manifest using vi
 
 ```bash
-kubectl create configmap frontend-nginx-config \
-  --namespace "$NAMESPACE" \
-  --from-literal=default.conf='server {
-    listen 8080;
-    server_name _;
-
-    location = /health {
-      default_type text/plain;
-      return 200 "frontend-ok\n";
-    }
-
-    location /api/ {
-      proxy_pass http://backend:5678/;
-      proxy_set_header Host $host;
-      proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    location / {
-      default_type text/plain;
-      return 200 "Hello from AKS frontend\n";
-    }
-  }'
+vi frontend-nginx-config.yaml
 ```
 
-Verify the ConfigMap:
+Press `i`, paste the following YAML, then press `Esc`, type `:wq`, and press `Enter`.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-nginx-config
+data:
+  default.conf: |
+    server {
+      listen 8080;
+      server_name _;
+
+      location = /health {
+        default_type text/plain;
+        return 200 "frontend-ok\n";
+      }
+
+      location /api/ {
+        proxy_pass http://backend:5678/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+      }
+
+      location / {
+        default_type text/plain;
+        return 200 "Hello from AKS frontend\n";
+      }
+    }
+```
+
+### 5.2 Validate and apply the ConfigMap
+
+```bash
+kubectl apply --dry-run=client -n "$NAMESPACE" -f frontend-nginx-config.yaml
+kubectl apply -n "$NAMESPACE" -f frontend-nginx-config.yaml
+```
+
+Verify the ConfigMap and inspect its contents:
 
 ```bash
 kubectl get configmap frontend-nginx-config -n "$NAMESPACE"
+kubectl describe configmap frontend-nginx-config -n "$NAMESPACE"
+kubectl get configmap frontend-nginx-config -n "$NAMESPACE" -o yaml
 ```
 
-**Explanation:** The ConfigMap stores NGINX configuration separately from the container image. The frontend uses the Kubernetes Service DNS name `backend` to reach the backend Pod.
+**Explanation:** The ConfigMap stores NGINX configuration separately from the container image. The frontend uses the Kubernetes Service DNS name `backend` to reach the backend Service on port `5678`.
+
+**Important:** This ConfigMap configures NGINX to listen on port `8080`. The frontend Deployment and Service in Step 6 must therefore use container/target port `8080`.
 
 ## Step 6 – Deploy the frontend and its Service
 
+The frontend Deployment runs two NGINX replicas. It mounts the ConfigMap file at `/etc/nginx/conf.d/default.conf`. The ClusterIP Service listens on port `80` and forwards traffic to container port `8080`.
+
+### 6.1 Create the frontend manifest using vi
+
 ```bash
-kubectl apply -n "$NAMESPACE" -f - <<'YAML'
+vi frontend.yaml
+```
+
+Press `i`, paste the following YAML, then press `Esc`, type `:wq`, and press `Enter`.
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -265,17 +315,31 @@ spec:
       port: 80
       targetPort: 8080
       protocol: TCP
-YAML
 ```
 
-Wait for the frontend rollout and inspect the Pods and Services:
+### 6.2 Validate and apply the manifest
+
+```bash
+kubectl apply --dry-run=client -n "$NAMESPACE" -f frontend.yaml
+kubectl apply -n "$NAMESPACE" -f frontend.yaml
+```
+
+### 6.3 Wait for rollout and inspect resources
 
 ```bash
 kubectl rollout status deployment/frontend -n "$NAMESPACE" --timeout=120s
+kubectl get pods -n "$NAMESPACE" -l app=frontend -o wide
+kubectl get deployment frontend -n "$NAMESPACE"
+kubectl get service frontend -n "$NAMESPACE"
+kubectl get endpoints frontend -n "$NAMESPACE"
 kubectl get pods,services -n "$NAMESPACE" -o wide
 ```
 
-Confirm that two frontend Pods and one backend Pod are running.
+Confirm that two frontend Pods and one backend Pod are ready, and that the frontend Service has ready endpoints on port `8080`.
+
+**Explanation:** The Deployment maintains two frontend Pods. The Service exposes port `80` inside the cluster and forwards requests to port `8080` on either ready frontend Pod.
+
+**Important:** The stock NGINX image normally listens on port `80`; the mounted ConfigMap replaces its default server configuration with one that listens on `8080`. If the frontend Pods fail readiness or enter `CrashLoopBackOff`, inspect `kubectl logs deployment/frontend -n "$NAMESPACE"` and `kubectl exec`/`nginx -T` before proceeding.
 
 ## Step 7 – Verify frontend-to-backend communication before applying the policy
 
@@ -296,10 +360,27 @@ Hello from AKS backend
 
 ## Step 8 – Create an Ingress resource
 
-Create an Ingress resource that routes HTTP requests to the frontend Service.
+Create an Ingress resource that routes HTTP requests to the frontend Service. The AKS Application Routing add-on's managed NGINX controller must be enabled and the IngressClass must exist before this step.
+
+### 8.1 Confirm the IngressClass
 
 ```bash
-kubectl apply -n "$NAMESPACE" -f - <<'YAML'
+kubectl get ingressclass
+kubectl get pods -n app-routing-system
+kubectl get services -n app-routing-system
+```
+
+Confirm that `webapprouting.kubernetes.azure.com` exists and that the managed controller is running.
+
+### 8.2 Create the Ingress manifest using vi
+
+```bash
+vi frontend-ingress.yaml
+```
+
+Press `i`, paste the following YAML, then press `Esc`, type `:wq`, and press `Enter`.
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -316,22 +397,32 @@ spec:
                 name: frontend
                 port:
                   number: 80
-YAML
 ```
 
-Check the Ingress status:
+### 8.3 Validate, apply and inspect the Ingress
 
 ```bash
-kubectl get ingress -n "$NAMESPACE" -o wide
+kubectl apply --dry-run=client -n "$NAMESPACE" -f frontend-ingress.yaml
+kubectl apply -n "$NAMESPACE" -f frontend-ingress.yaml
+kubectl get ingress frontend-ingress -n "$NAMESPACE" -o wide
+kubectl describe ingress frontend-ingress -n "$NAMESPACE"
 ```
 
-Retrieve the external IP of the managed NGINX controller Service:
+### 8.4 Retrieve the managed NGINX controller's external address
+
+First inspect the controller Service:
+
+```bash
+kubectl get services -n app-routing-system -o wide
+```
+
+The managed controller Service is commonly named `nginx` when the add-on is configured with the default controller name. Confirm the actual Service name and use it below:
 
 ```bash
 kubectl get service nginx -n app-routing-system -o wide
 ```
 
-Wait until the Service has an external IP address. Then set it in a variable:
+Wait until its `EXTERNAL-IP` is assigned. Then retrieve the IP:
 
 ```bash
 export INGRESS_IP=$(kubectl get service nginx -n app-routing-system \
@@ -339,33 +430,25 @@ export INGRESS_IP=$(kubectl get service nginx -n app-routing-system \
 echo "$INGRESS_IP"
 ```
 
-If `INGRESS_IP` is empty, the Azure Load Balancer address is not ready yet. Recheck the Service and its events before continuing.
+If the value is empty, inspect the Service and its events; do not run the curl tests until an address is assigned. If the Service publishes a hostname instead of an IP, use that hostname as the Ingress endpoint.
 
-Test the frontend through the Ingress endpoint:
+### 8.5 Test the application through Ingress
 
 ```bash
 curl -i "http://${INGRESS_IP}/"
-```
-
-Expected response body:
-
-```text
-Hello from AKS frontend
-```
-
-Test the frontend's API proxy route:
-
-```bash
+curl -i "http://${INGRESS_IP}/health"
 curl -i "http://${INGRESS_IP}/api/"
 ```
 
-Expected response body:
+Expected response bodies:
 
 ```text
+Hello from AKS frontend
+frontend-ok
 Hello from AKS backend
 ```
 
-**Explanation:** The Ingress controller receives the HTTP request and routes it to the frontend Service. NGINX in the frontend then forwards `/api/` requests to the backend Service.
+**Explanation:** The managed Ingress controller receives the HTTP request and routes it to the frontend Service on port `80`. NGINX in the frontend Pod then forwards `/api/` requests to the backend Service on port `5678`.
 
 ## Step 9 – Create a test client Pod
 
@@ -406,10 +489,17 @@ Hello from AKS backend
 
 ## Step 10 – Apply a NetworkPolicy to the backend
 
-The policy below selects Pods labelled `app=backend` and allows incoming TCP traffic on port `5678` only from Pods labelled `app=frontend` in the same namespace.
+The policy selects Pods labelled `app=backend` and allows incoming TCP traffic on port `5678` only from Pods labelled `app=frontend` in the same namespace. The policy requires a supported NetworkPolicy engine, as checked in Step 2.
+
+### 10.1 Create the NetworkPolicy manifest using vi
 
 ```bash
-kubectl apply -n "$NAMESPACE" -f - <<'YAML'
+vi backend-network-policy.yaml
+```
+
+Press `i`, paste the following YAML, then press `Esc`, type `:wq`, and press `Enter`.
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -428,17 +518,26 @@ spec:
       ports:
         - protocol: TCP
           port: 5678
-YAML
 ```
 
-Verify the policy:
+### 10.2 Validate and apply the NetworkPolicy
+
+```bash
+kubectl apply --dry-run=client -n "$NAMESPACE" -f backend-network-policy.yaml
+kubectl apply -n "$NAMESPACE" -f backend-network-policy.yaml
+```
+
+### 10.3 Verify the policy and the selected Pod labels
 
 ```bash
 kubectl get networkpolicy -n "$NAMESPACE"
 kubectl describe networkpolicy allow-backend-from-frontend -n "$NAMESPACE"
+kubectl get pods -n "$NAMESPACE" --show-labels
 ```
 
-**Explanation:** The NetworkPolicy selects backend Pods and isolates them for ingress traffic. Only Pods matching `app=frontend` are allowed to connect to the backend on TCP port `5678`. The policy does not restrict other traffic directions or other Pods.
+Confirm that backend Pods have `app=backend` and frontend Pods have `app=frontend`.
+
+**Explanation:** The NetworkPolicy selects backend Pods and isolates them for ingress traffic. Only Pods matching `app=frontend` are allowed to connect to the backend on TCP port `5678`. This policy does not restrict egress traffic from backend Pods. NetworkPolicy rules are additive, so other policies selecting the same Pods can add allowed traffic.
 
 ## Step 11 – Test allowed and blocked communication
 
@@ -502,6 +601,12 @@ Delete the lab namespace and all resources created inside it:
 kubectl delete namespace "$NAMESPACE"
 ```
 
+Remove the local manifest files created by this lab:
+
+```bash
+rm -f backend.yaml frontend-nginx-config.yaml frontend.yaml frontend-ingress.yaml backend-network-policy.yaml
+```
+
 Confirm that the namespace has been removed:
 
 ```bash
@@ -523,6 +628,8 @@ The AKS Application Routing add-on is cluster-scoped and may be shared by other 
 | `/api/` returns an error | Verify the backend Pod and Service, then check the NGINX ConfigMap and frontend Pod logs. |
 | Debug client can still access backend after policy | Confirm that AKS has Cilium, Calico or Azure NPM enabled; then verify the policy selectors, Pod labels, namespace and TCP port. |
 | Frontend cannot access backend after policy | Confirm frontend Pods have label `app=frontend`, backend Pods have label `app=backend`, and the policy allows TCP port `5678`. |
+| Frontend Pod fails to start or returns connection errors | Confirm the ConfigMap has `listen 8080`, the frontend container port is `8080`, and the frontend Service `targetPort` is `8080`. Inspect `kubectl logs deployment/frontend -n "$NAMESPACE"` and `kubectl exec deployment/frontend -n "$NAMESPACE" -- nginx -T`. |
+| ConfigMap changes are not reflected in NGINX | The ConfigMap is mounted using `subPath`; restart the frontend Deployment after changing the file: `kubectl rollout restart deployment/frontend -n "$NAMESPACE"`; then wait for rollout. |
 
 Useful commands:
 
