@@ -110,8 +110,9 @@ The sample application uses the `registry.k8s.io/hpa-example` image. Its contain
 
 ### 5.1 Create the Deployment and Service manifest
 
+Create a file: **vi php-apache.yaml**
+
 ```bash
-cat <<'EOF' > php-apache.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -152,7 +153,6 @@ spec:
     - name: http
       port: 80
       targetPort: 80
-EOF
 ```
 
 Creates a YAML file containing a one-replica Deployment and an internal ClusterIP Service. The Service gives the load-generator Pod a stable DNS name to call.
@@ -191,8 +191,9 @@ Create an HPA that maintains between **1 and 5 replicas**, targeting **50% avera
 
 ### 6.1 Create the HPA manifest
 
+Create a file: **vi php-apache-hpa.yaml**
+
 ```bash
-cat <<'EOF' > php-apache-hpa.yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -212,7 +213,6 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
-EOF
 ```
 
 Defines an HPA that targets the `php-apache` Deployment. It uses CPU utilization and keeps the replica count between one and five.
@@ -245,8 +245,9 @@ Create a load-generator Pod in the same namespace. It continuously sends HTTP re
 
 ### 7.1 Create the load-generator manifest
 
+Create a file: **vi load-generator.yaml**
+
 ```bash
-cat <<'EOF' > load-generator.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -266,7 +267,6 @@ spec:
             wget -q -O- http://php-apache >/dev/null
             sleep 0.01
           done
-EOF
 ```
 
 Defines a BusyBox Pod that repeatedly sends requests to the application Service. The short delay keeps requests continuous while avoiding an unnecessary tight loop.
