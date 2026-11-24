@@ -75,10 +75,9 @@ kubectl get apiservice v1beta1.metrics.k8s.io
 
 The sample application performs CPU-intensive work when it receives HTTP requests, making it useful for demonstrating CPU-based autoscaling.
 
-Create the manifest:
+Create the manifest: **vi php-apache.yaml**
 
 ```bash
-cat > php-apache.yaml <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -118,7 +117,6 @@ spec:
       port: 80
       targetPort: 80
   type: ClusterIP
-EOF
 ```
 
 Apply the manifest and wait for the Deployment to become available:
@@ -137,8 +135,9 @@ kubectl get deployment,pods -n "$NAMESPACE"
 
 Create an HPA manifest using the `autoscaling/v2` API:
 
+Create a file: **vi php-apache-hpa.yaml**
+
 ```bash
-cat > php-apache-hpa.yaml <<'EOF'
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -161,7 +160,6 @@ spec:
   behavior:
     scaleDown:
       stabilizationWindowSeconds: 60
-EOF
 ```
 
 Apply the HPA:
