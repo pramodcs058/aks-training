@@ -136,8 +136,7 @@ spec:
     - name: demo-container
       image: busybox:1.36
       command: ["/bin/sh", "-c"]
-      args:
-        - echo "Application starting"; echo "ERROR: simulated startup failure"; exit 1
+      args: ["echo \"Application starting\"; echo \"ERROR: simulated startup failure\"; exit 1"]
 EOF
 ```
 
