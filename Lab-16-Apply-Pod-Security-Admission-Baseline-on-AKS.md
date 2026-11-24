@@ -100,9 +100,9 @@ pod-security.kubernetes.io/enforce=baseline
 ### Step 4 – Deploy a Pod that complies with Baseline
 
 Create a simple NGINX Pod without privileged settings or other baseline violations.
+Create a file: **vi baseline-allowed-pod.yaml**
 
 ```bash
-cat <<'MANIFEST' > baseline-allowed-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -116,7 +116,6 @@ spec:
       image: nginx:stable-alpine
       ports:
         - containerPort: 80
-MANIFEST
 ```
 
 Apply the manifest and wait for the Pod to become Ready:
@@ -134,9 +133,9 @@ kubectl get pod baseline-allowed -n "$NAMESPACE" -o wide
 ### Step 5 – Create a Pod that violates Baseline
 
 The following Pod sets `privileged: true`. Privileged containers are prohibited by the Baseline profile.
+Create a file: **vi baseline-violating-pod.yaml**
 
 ```bash
-cat <<'MANIFEST' > baseline-violating-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -150,7 +149,6 @@ spec:
       image: nginx:stable-alpine
       securityContext:
         privileged: true
-MANIFEST
 ```
 
 Submit the manifest:
